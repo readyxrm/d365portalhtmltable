@@ -1,0 +1,97 @@
+{% extends 'Layout 1 Column' %}
+{% block main %}
+
+{%include 'Page Copy' %}
+
+{% assign SessionInfo_marker = sitemarkers["SessionInfo"]  %}
+{% assign event_marker = sitemarkers["EventInfo"]  %}
+
+
+{% fetchxml eventsessions %}
+
+<fetch version="1.0" mapping="logical" output-format="xml-platform" distinct='true' returntotalrecordcount='true' >
+  <entity name="avngr_eventsession" >
+    <attribute name="avngr_name" />
+    <filter type="and" >
+      <condition attribute="statecode" operator="eq" value="0" />
+    </filter>
+    <attribute name="statuscode" />
+    <attribute name="avngr_location" />
+    <attribute name="avngr_eventid" />
+    <attribute name="avngr_dateandtimeofsession" />
+    <attribute name="avngr_displayorder" />
+    <attribute name="avngr_eventsessionid" />
+    <order attribute="avngr_displayorder" />
+  </entity>
+</fetch>
+
+
+{% endfetchxml %}
+
+{% if eventsessions.results.total_record_count > 0 %}
+    
+    <div class="entitylist" id="sessions">
+        <div class="entity-grid entitylist" data-column-width-style="Percent">
+            <div class="view-grid">
+                <table aria-live="polite" aria-relevant="additions" role="grid" tabindex="0" class="table table-striped table-fluid">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;" class="sort-enabled sort sort-asc">                   
+                                {{ snippets["Event/Gridheader/Sessionname"] }}
+                            </th>
+                            <th style="width: 20%;" class="sort-enabled">
+                                {{ snippets["Event/Gridheader/SessionDate"] }}
+                            </th>
+                            <th style="width: 20%;" class="sort-enabled">
+                                {{ snippets["Event/Gridheader/Eventname"] }}
+                            </th>
+                            <th style="width:20%;" class="sort-enabled">
+                                {{ snippets["Event/Gridheader/Location"] }}
+                            </th>
+                            <th style="width: 20%;" class="sort-enabled">
+                                {{ snippets["Event/Gridheader/Status"] }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody style="">
+                        {% for eventsession in eventsessions.results.entities %} 
+                        {% assign sessiondate = eventsession.avngr_dateandtimeofsession | date_to_iso8601 %} 
+                        <tr>
+                            <td>
+                                <a href="{{ SessionInfo_marker.url }}?id={{ eventsession.id }}">{{ eventsession.avngr_name }}</a> 
+                            </td>
+                            <td>
+                                {{ sessiondate | date:'MM/dd/yyyy' }}
+                            </td>
+                            <td>
+                                <a href="{{ event_marker.url }}?id= {{ eventsession.avngr_eventid.id }}">{{ eventsession.avngr_eventid.name }}</a> 
+                            </td>
+                            <td>
+                                {{ eventsession.avngr_location | escape }}
+                            </td>
+                            {% if eventsession.statuscode.label == "Tentative" %}    
+                            <td bgcolor="#FF0000">
+                                {{ eventsession.statuscode.label | escape }}
+                            </td>
+                            {% else %}
+                            <td bgcolor="#00FF00">
+                                {{ eventsession.statuscode.label | escape }}
+                            </td>
+                            {% endif %}                       
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endif %}
+
+{% if eventsessions.results.total_record_count <= 0 %}
+
+    {{ snippets["Event/NoData"] }}
+
+{% endif %}
+
+{% endblock %}
